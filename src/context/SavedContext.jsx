@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const SavedContext = createContext();
 
@@ -12,21 +12,28 @@ export const SavedProvider = ({ children }) => {
     localStorage.setItem("devlens_saved_reports", JSON.stringify(savedReports));
   }, [savedReports]);
 
-  const saveReport = (report) => {
+  const saveReport = useCallback((report) => {
     setSavedReports((prev) => {
       const filtered = prev.filter((item) => item.username !== report.username);
-      return [{ ...report, savedAt: new Date().toLocaleDateString() }, ...filtered];
+      return [{ ...report, savedAt: new Date().toISOString() }, ...filtered];
     });
-  };
+  }, []);
 
-  const removeReport = (username) => {
+  const removeReport = useCallback((username) => {
     setSavedReports((prev) => prev.filter((item) => item.username !== username));
-  };
+  }, []);
 
-  const isSaved = (username) => savedReports.some((item) => item.username === username);
+  const isSaved = useCallback(
+    (username) => savedReports.some((item) => item.username === username),
+    [savedReports],
+  );
+  const value = useMemo(
+    () => ({ savedReports, saveReport, removeReport, isSaved }),
+    [savedReports, saveReport, removeReport, isSaved],
+  );
 
   return (
-    <SavedContext.Provider value={{ savedReports, saveReport, removeReport, isSaved }}>
+    <SavedContext.Provider value={value}>
       {children}
     </SavedContext.Provider>
   );

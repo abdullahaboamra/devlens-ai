@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { loginUser } from "../services/authApi";
 
 const AuthContext = createContext();
@@ -9,20 +9,24 @@ export const AuthProvider = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const login = async (username, password) => {
-    const data = await loginUser(username, password);
+  const login = useCallback(async (username) => {
+    const data = await loginUser(username);
     setUser(data);
     localStorage.setItem("devlens_user", JSON.stringify(data));
     return data;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("devlens_user");
-  };
+  }, []);
+  const value = useMemo(
+    () => ({ user, login, logout, isAuthenticated: !!user }),
+    [user, login, logout],
+  );
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
